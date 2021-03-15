@@ -1,0 +1,109 @@
+from math import radians, cos, sin, asin, sqrt
+import urllib.request
+import json
+from tkinter import *
+from tkinter import messagebox
+
+def instructions():
+    messagebox.showinfo("Hey There!", "Put a postcode in each box and hit Calculate. The mileage is measured 'as the crow flies' because google wants payment to use their maps service.\
+                             \n \nMade by your main man Richard.")
+
+window = Tk()
+window.title("Mileage Calculator") # title bar
+window.configure(background="grey")
+window.geometry("250x180")
+menu = Menu(window)
+new_item = Menu(menu, tearoff=False)
+new_item.add_command(label="Instructions",command=instructions)
+menu.add_cascade(label="About", menu=new_item)
+window.config(menu=menu)
+v = StringVar()
+u = StringVar()
+z = StringVar()
+
+def caps(event):
+    v.set(v.get().upper())
+
+def caps2(event):
+    u.set(u.get().upper())
+
+def caps3(event):
+    z.set(z.get().upper())
+    
+    
+title = Label(window, text="Simple Mileage Calculator", font=("Arial Bold", 10))
+title.configure(background="grey")
+title.place(x=15, y=10) 
+lbl1 = Label(window, text="Post Code 1: ", font=("Arial Bold", 10))
+lbl1.configure(background="grey")
+lbl2 = Label(window, text="Post Code 2: ", font=("Arial Bold", 10))
+lbl2.configure(background="grey")
+lbl1.place(x=15, y=40) 
+lbl2.place(x=15, y=70)
+lbl3 = Label(window, text="Miles: ", font=("Arial Bold", 10))
+lbl3.configure(background="grey")
+lbl3.place(x=15, y=100)
+fir = Entry(window,width=15,justify="center",textvariable=v)
+fir.place(x=110, y=40) 
+sec = Entry(window,width=15,justify="center",textvariable=u)
+sec.place(x=110, y= 70)
+reso = Entry(window,width=15,justify="center",textvariable=z)
+reso.place(x=110, y= 100)
+fir.bind("<KeyRelease>", caps)
+sec.bind("<KeyRelease>", caps2)
+reso.bind("<KeyRelease>", caps3)
+
+
+def postcode():
+    reso.delete(0, "end")
+    a = True
+
+    while a == True:
+
+        try:
+
+            one = fir.get()
+            two = sec.get()
+            one = one.lower() # convert to lowercase
+            two = two.lower() 
+            one = one.replace(" ", "") # remove spaces
+            two = two.replace(" ", "")
+
+            # first postcode
+            res1 = urllib.request.urlopen(f"http://api.postcodes.io/postcodes/{one}").read() # opening api.postcodes.io
+            data1 = json.loads(res1) # saving dict as variable
+            lon1 = data1["result"]["longitude"] # getting longitutde from dict
+            lat1 = data1["result"]["latitude"] # getting latitude from dict
+
+            # second postcode
+            res2 = urllib.request.urlopen(f"http://api.postcodes.io/postcodes/{two}").read() # opening api.postcodes.io
+            data2 = json.loads(res2) # saving dict as variable
+            lon2 = data2["result"]["longitude"] # getting longitutde from dict
+            lat2 = data2["result"]["latitude"] # getting latitude from dict
+
+            lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+            '''
+            Math time! To calculate the distance I had to look online, the below website was used.
+            https://byjus.com/jee/distance-formula/
+
+            '''
+
+            dlon = lon2 - lon1 
+            dlat = lat2 - lat1 
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            c = 2 * asin(sqrt(a)) 
+            r = 3956 # converted r to miles, as this is the UK.
+            res = c*r
+            res = round(res, 2)
+            reso.insert("end",f"{res}")
+
+        except:
+            reso.insert("end","#####")
+            break
+            
+        
+btn0 = Button(window, text="Calculate", bg="white", fg="black",command=postcode)
+btn0.place(x=90, y=140) 
+
+window.mainloop()
